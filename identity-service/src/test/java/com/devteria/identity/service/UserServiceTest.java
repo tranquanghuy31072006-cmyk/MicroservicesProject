@@ -21,7 +21,9 @@ import com.devteria.identity.dto.request.UserCreationRequest;
 import com.devteria.identity.dto.response.UserResponse;
 import com.devteria.identity.entity.User;
 import com.devteria.identity.exception.AppException;
+import com.devteria.identity.repository.RoleRepository;
 import com.devteria.identity.repository.UserRepository;
+import com.devteria.identity.repository.httpclient.ProfileClient;
 
 @SpringBootTest
 @TestPropertySource("/test.properties")
@@ -31,6 +33,12 @@ public class UserServiceTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private RoleRepository roleRepository;
+
+    @MockBean
+    private ProfileClient profileClient;
 
     private UserCreationRequest request;
     private UserResponse userResponse;
@@ -49,21 +57,15 @@ public class UserServiceTest {
                 .dob(dob)
                 .build();
 
-        userResponse = UserResponse.builder()
-                .id("cf0600f538b3")
-                .username("john")
-                .firstName("John")
-                .lastName("Doe")
-                .dob(dob)
-                .build();
+        user = User.builder().id("cf0600f538b3").username("john").build();
 
-        user = User.builder()
-                .id("cf0600f538b3")
-                .username("john")
-                .firstName("John")
-                .lastName("Doe")
-                .dob(dob)
-                .build();
+        //        user = User.builder()
+        //                .id("cf0600f538b3")
+        //                .username("john")
+        //                .firstName("John")
+        //                .lastName("Doe")
+        //                .dob(dob)
+        //                .build();
     }
 
     @Test

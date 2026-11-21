@@ -1,7 +1,7 @@
 package com.devteria.gateway.service;
 
+import com.devteria.gateway.dto.ApiResponse;
 import com.devteria.gateway.dto.request.IntrospectRequest;
-import com.devteria.gateway.dto.response.ApiResponse;
 import com.devteria.gateway.dto.response.IntrospectResponse;
 import com.devteria.gateway.repository.IdentityClient;
 import lombok.AccessLevel;
@@ -16,7 +16,9 @@ import reactor.core.publisher.Mono;
 public class IdentityService {
     IdentityClient identityClient;
 
-    public Mono<ApiResponse<IntrospectResponse>> introspect(String token) {
-        return identityClient.introspect(IntrospectRequest.builder().token(token).build());
+    public Mono<ApiResponse<IntrospectResponse>> introspect(String token){
+        return identityClient.introspect(IntrospectRequest.builder()
+                        .token(token)
+                .build());
     }
 }
