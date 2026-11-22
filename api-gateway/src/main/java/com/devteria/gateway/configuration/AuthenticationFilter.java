@@ -1,10 +1,9 @@
 package com.devteria.gateway.configuration;
 
-import com.devteria.gateway.dto.ApiResponse;
+import com.devteria.gateway.dto.response.ApiResponse;
 import com.devteria.gateway.service.IdentityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.server.HttpServerResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,8 +51,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         if (isPublicEndpoint(exchange.getRequest()))
             return chain.filter(exchange);
 
-        // Get token from authorization header
         List<String> authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION);
+
         if (CollectionUtils.isEmpty(authHeader))
             return unauthenticated(exchange.getResponse());
 
@@ -85,7 +83,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
                 .message("Unauthenticated")
                 .build();
 
-        String body = null;
+        String body;
         try {
             body = objectMapper.writeValueAsString(apiResponse);
         } catch (JsonProcessingException e) {
