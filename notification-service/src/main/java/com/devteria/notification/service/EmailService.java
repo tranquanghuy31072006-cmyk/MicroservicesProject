@@ -21,7 +21,7 @@ import java.util.List;
 public class EmailService {
     EmailClient emailClient;
 
-    String apiKey = "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";
+    String apiKey = "your-brevo-apikey";
 
     public EmailResponse sendEmail(SendEmailRequest sendEmailRequest) {
         EmailRequest emailRequest = EmailRequest.builder()
