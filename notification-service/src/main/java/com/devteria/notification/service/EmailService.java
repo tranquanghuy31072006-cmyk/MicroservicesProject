@@ -23,19 +23,19 @@ public class EmailService {
 
     String apiKey = "your-brevo-apikey";
 
-    public EmailResponse sendEmail(SendEmailRequest sendEmailRequest) {
+    public EmailResponse sendEmail(SendEmailRequest request) {
         EmailRequest emailRequest = EmailRequest.builder()
                 .sender(Sender.builder()
-                        .name("Hoang The Bao")
-                        .email("hoangthebaovn@gmail.com")
+                        .name("Devteria DotCom")
+                        .email("devteriadotcom@gmail.com")
                         .build())
-                .to(List.of(sendEmailRequest.getTo()))
-                .subject(sendEmailRequest.getSubject())
-                .htmlContent(sendEmailRequest.getHtmlContent())
+                .to(List.of(request.getTo()))
+                .subject(request.getSubject())
+                .htmlContent(request.getHtmlContent())
                 .build();
         try {
             return emailClient.sendEmail(apiKey, emailRequest);
-        } catch (FeignException e) {
+        } catch (FeignException e){
             throw new AppException(ErrorCode.CANNOT_SEND_EMAIL);
         }
     }
