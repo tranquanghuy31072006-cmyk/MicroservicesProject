@@ -1,4 +1,3 @@
-
 server:
   port: 8082
   servlet:
@@ -19,3 +18,8 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+notification:
+  email:
+    brevo-url: https://api.brevo.com
+    brevo-apikey: "${BREVO_API_KEY:}"
