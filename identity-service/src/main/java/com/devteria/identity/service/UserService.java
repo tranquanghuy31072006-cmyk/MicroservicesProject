@@ -55,7 +55,7 @@ public class UserService {
 
         try {
             user = userRepository.save(user);
-        } catch (DataIntegrityViolationException exception) {
+        } catch (DataIntegrityViolationException exception){
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
@@ -70,13 +70,14 @@ public class UserService {
                 .subject("Welcome to bookteria")
                 .body("Hello, " + request.getUsername())
                 .build();
+
         // Publish message to kafka
         kafkaTemplate.send("notification-delivery", notificationEvent);
 
-        var userCreationResponse = userMapper.toUserResponse(user);
-        userCreationResponse.setId(profile.getResult().getId());
+        var userCreationReponse = userMapper.toUserResponse(user);
+        userCreationReponse.setId(profile.getResult().getId());
 
-        return userCreationResponse;
+        return userCreationReponse;
     }
 
     public UserResponse getMyInfo() {
