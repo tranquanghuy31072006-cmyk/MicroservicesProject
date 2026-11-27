@@ -60,12 +60,21 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String token = authHeader.getFirst().replace("Bearer ", "");
         log.info("Token: {}", token);
 
+//        return identityService.introspect(token).flatMap(introspectResponse -> {
+//            if (introspectResponse.getResult().isValid())
+//                return chain.filter(exchange);
+//            else
+//                return unauthenticated(exchange.getResponse());
+//        }).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));
         return identityService.introspect(token).flatMap(introspectResponse -> {
-            if (introspectResponse.getResult().isValid())
+            if (introspectResponse.getResult() != null && introspectResponse.getResult().isValid())
                 return chain.filter(exchange);
             else
                 return unauthenticated(exchange.getResponse());
-        }).onErrorResume(throwable -> unauthenticated(exchange.getResponse()));
+        }).onErrorResume(throwable -> {
+            log.error("Lỗi khi gọi Identity Service introspect: ", throwable); // Thêm dòng này
+            return unauthenticated(exchange.getResponse());
+        });
     }
 
     @Override
