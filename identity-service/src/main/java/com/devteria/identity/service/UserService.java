@@ -3,6 +3,7 @@ package com.devteria.identity.service;
 import java.util.HashSet;
 import java.util.List;
 
+import com.devteria.event.dto.NotificationEvent;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,7 +41,7 @@ public class UserService {
     ProfileMapper profileMapper;
     PasswordEncoder passwordEncoder;
     ProfileClient profileClient;
-    KafkaTemplate<String, String> kafkaTemplate;
+    KafkaTemplate<String, Object> kafkaTemplate;
 
     public UserResponse createUser(UserCreationRequest request) {
         User user = userMapper.toUser(request);
@@ -54,7 +55,7 @@ public class UserService {
 
         try {
             user = userRepository.save(user);
-        } catch (DataIntegrityViolationException exception){
+        } catch (DataIntegrityViolationException exception) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
@@ -63,13 +64,19 @@ public class UserService {
 
         var profile = profileClient.createProfile(profileRequest);
 
+        NotificationEvent notificationEvent = NotificationEvent.builder()
+                .channel("EMAIL")
+                .recipient(request.getEmail())
+                .subject("Welcome to bookteria")
+                .body("Hello, " + request.getUsername())
+                .build();
         // Publish message to kafka
-        kafkaTemplate.send("onboard-successful", "Welcome our new member " + user.getUsername());
+        kafkaTemplate.send("notification-delivery", notificationEvent);
 
-        var userCreationReponse = userMapper.toUserResponse(user);
-        userCreationReponse.setId(profile.getResult().getId());
+        var userCreationResponse = userMapper.toUserResponse(user);
+        userCreationResponse.setId(profile.getResult().getId());
 
-        return userCreationReponse;
+        return userCreationResponse;
     }
 
     public UserResponse getMyInfo() {
