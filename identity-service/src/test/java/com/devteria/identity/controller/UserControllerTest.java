@@ -52,8 +52,13 @@ public class UserControllerTest {
                 .dob(dob)
                 .build();
 
-        userResponse =
-                UserResponse.builder().id("cf0600f538b3").username("john").build();
+        userResponse = UserResponse.builder()
+                .id("cf0600f538b3")
+                .username("john")
+                .firstName("John")
+                .lastName("Doe")
+                .dob(dob)
+                .build();
     }
 
     @Test
@@ -85,7 +90,7 @@ public class UserControllerTest {
         String content = objectMapper.writeValueAsString(request);
 
         // WHEN, THEN
-        mockMvc.perform(MockMvcRequestBuilders.post("/users/registration")
+        mockMvc.perform(MockMvcRequestBuilders.post("/users")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(content))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest())

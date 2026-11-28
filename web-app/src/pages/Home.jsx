@@ -1,179 +1,171 @@
-import { useEffect, useState } from "react";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Card, CircularProgress, Typography } from "@mui/material";
-import { getMyInfo } from "../services/userService";
-import { isAuthenticated } from "../services/authenticationService";
+import { isAuthenticated, logOut } from "../services/authenticationService";
 import Scene from "./Scene";
+import Post from "../components/Post";
+import { getMyPosts } from "../services/postService";
 
 export default function Home() {
-  const navigate = useNavigate();
-  const [userDetails, setUserDetails] = useState({});
+    const [posts, setPosts] = useState([]);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
-  const getUserDetails = async () => {
-    try {
-      const response = await getMyInfo();
-      const data = response.data;
+    const navigate = useNavigate();
 
-      console.log(data);
+    const observer = useRef(null);
+    const loadingRef = useRef(false);
 
-      setUserDetails(data.result);
-    } catch (error) {}
-  };
+    // Load posts whenever the requested page changes.
+    useEffect(() => {
+        if (!isAuthenticated()) {
+            navigate("/login");
+            return;
+        }
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-    } else {
-      getUserDetails();
-    }
-  }, [navigate]);
+        const controller = new AbortController();
 
-  return (
-    <Scene>
-      {userDetails ? (
-        <Card
-          sx={{
-            minWidth: 350,
-            maxWidth: 500,
-            boxShadow: 3,
-            borderRadius: 2,
-            padding: 4,
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              width: "100%",
-              gap: "10px",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 18,
-                mb: "40px",
-              }}
+        const loadPosts = async () => {
+            loadingRef.current = true;
+            setLoading(true);
+            setErrorMessage("");
+
+            try {
+                const response = await getMyPosts(page, controller.signal);
+                const result = response.data.result;
+
+                if (!result || !Array.isArray(result.data)) {
+                    throw new Error("Invalid posts response");
+                }
+
+                const newPosts = result.data;
+                const totalPages = result.totalPages || 0;
+
+                setPosts((previousPosts) =>
+                    page === 1 ? newPosts : [...previousPosts, ...newPosts]
+                );
+
+                setHasMore(page < totalPages && newPosts.length > 0);
+            } catch (error) {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
+                if (error.response?.status === 401) {
+                    logOut();
+                    navigate("/login");
+                    return;
+                }
+
+                setHasMore(false);
+                setErrorMessage("Unable to load posts. Please try again.");
+            } finally {
+                if (!controller.signal.aborted) {
+                    loadingRef.current = false;
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadPosts();
+
+        return () => {
+            controller.abort();
+            observer.current?.disconnect();
+        };
+    }, [navigate, page]);
+
+    // Observe the last post to trigger loading the next page.
+    const lastPostElementRef = useCallback(
+        (node) => {
+            if (observer.current) {
+                observer.current.disconnect();
+            }
+
+            if (!node || loading || !hasMore) {
+                return;
+            }
+
+            observer.current = new IntersectionObserver((entries) => {
+                if (
+                    entries[0].isIntersecting &&
+                    hasMore &&
+                    !loadingRef.current
+                ) {
+                    loadingRef.current = true;
+                    setPage((previousPage) => previousPage + 1);
+                }
+            });
+
+            observer.current.observe(node);
+        },
+        [loading, hasMore]
+    );
+
+    return (
+        <Scene>
+            <Card
+                sx={{
+                    width: "100%",
+                    minWidth: 500,
+                    maxWidth: 600,
+                    boxShadow: 3,
+                    borderRadius: 2,
+                    padding: "20px",
+                }}
             >
-              Welcome back to Devteria, {userDetails.username} !
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                width: "100%", // Ensure content takes full width
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                User Id
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {userDetails.id}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                width: "100%", // Ensure content takes full width
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                First Name
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {userDetails.firstName}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                width: "100%", // Ensure content takes full width
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                Last Name
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {userDetails.lastName}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                width: "100%", // Ensure content takes full width
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                Date of birth
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {userDetails.dob}
-              </Typography>
-            </Box>
-          </Box>
-        </Card>
-      ) : (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "30px",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-          }}
-        >
-          <CircularProgress></CircularProgress>
-          <Typography>Loading ...</Typography>
-        </Box>
-      )}
-    </Scene>
-  );
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        width: "100%",
+                        gap: "10px",
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            fontSize: 18,
+                            mb: "10px",
+                        }}
+                    >
+                        Your posts
+                    </Typography>
+
+                    {posts.map((post, index) => (
+                        <Post
+                            ref={index === posts.length - 1 ? lastPostElementRef : null}
+                            key={post.id}
+                            post={post}
+                        />
+                    ))}
+
+                    {loading && (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                width: "100%",
+                            }}
+                        >
+                            <CircularProgress size="24px" />
+                        </Box>
+                    )}
+
+                    {errorMessage && (
+                        <Typography color="error">
+                            {errorMessage}
+                        </Typography>
+                    )}
+
+                    {!loading && !errorMessage && posts.length === 0 && (
+                        <Typography>No posts available.</Typography>
+                    )}
+                </Box>
+            </Card>
+        </Scene>
+    );
 }
